@@ -141,3 +141,33 @@ summarize_pred_metrics <- function(pred_df) {
       .groups = "drop"
     )
 }
+
+# Test metrics
+# OUTER LOOP  : iterate p over p_grid
+# MIDDLE LOOP : iterate h over h_list
+# INNER LOOP  : roll over time k via roll_preds_arp_split()
+metrics_arp_nn <- purrr::map_dfr(p_grid, function(p0) {
+  purrr::map_dfr(h_list, function(h) {
+    preds_test <- roll_preds_arp_split(df_all,
+                                       test_df,
+                                       test_start_idx,
+                                       h = h,
+                                       p = p0)
+
+    m_test <- summarize_pred_metrics(preds_test)
+
+    tibble(
+      model_id = paste0("AR", p0),
+      p = p0,
+      horizon = h
+    ) %>% bind_cols(
+      m_test %>%
+        rename(
+          test_mse  = mse,
+          test_rmse = rmse,
+          test_mae  = mae
+        )
+    )
+  })
+}) %>%
+  arrange(horizon, test_mae)
