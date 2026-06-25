@@ -171,3 +171,7 @@ metrics_arp_nn <- purrr::map_dfr(p_grid, function(p0) {
   })
 }) %>%
   arrange(horizon, test_mae)
+
+# CSV Export
+write_csv(metrics_arp_nn, "AR Metrics FINAL.csv")
+metrics_arp_nn
