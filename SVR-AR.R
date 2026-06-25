@@ -130,3 +130,14 @@ roll_preds_arp_split <- function(df_all, split_df, split_start_idx, h, p) {
     )
   })
 }
+
+# Summarize rolling residuals into forecast accuracy metrics (MSE/RMSE/MAE)
+summarize_pred_metrics <- function(pred_df) {
+  pred_df %>%
+    summarize(
+      mse  = mean(resid^2, na.rm = TRUE),
+      rmse = sqrt(mse),
+      mae  = mean(abs(resid), na.rm = TRUE),
+      .groups = "drop"
+    )
+}
