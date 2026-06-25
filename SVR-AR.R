@@ -69,3 +69,15 @@ i_test_start <- n - n_test + 1
 # Subset df_all into training and test sets
 train_df <- df_all[1:(i_test_start - 1), ]
 test_df  <- df_all[i_test_start:n, ]
+
+# Rolling forecast
+# Horizons
+h_list <- c(1, 3)
+
+# Define the AR order grid to evaluate
+p_grid <- c(1:6)
+
+# Define global start index for the test split inside df_all
+# Needed because rolling code maps split row k -> global df_all row index:
+# target_global_idx = split_start_idx + (k - 1)
+test_start_idx <- i_test_start
