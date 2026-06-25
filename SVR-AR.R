@@ -81,3 +81,17 @@ p_grid <- c(1:6)
 # Needed because rolling code maps split row k -> global df_all row index:
 # target_global_idx = split_start_idx + (k - 1)
 test_start_idx <- i_test_start
+
+# Define AR(p) fit function: For stationary AR(p), we set d = 0 and force
+# include.mean = TRUE.
+fit_arp <- function(ts_y, p) {
+  forecast::Arima(ts_y, order = c(p, 0, 0), include.mean = TRUE)
+}
+
+# Convert a df slice into a monthly ts object. Start is derived from df_slice so
+# the ts timeline matches the slice.
+make_ts_from_slice <- function(df_slice) {
+  ts(df_slice$y,
+     start = c(year(min(df_slice$date)), month(min(df_slice$date))),
+     frequency = 12)
+}
