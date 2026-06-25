@@ -95,3 +95,38 @@ make_ts_from_slice <- function(df_slice) {
      start = c(year(min(df_slice$date)), month(min(df_slice$date))),
      frequency = 12)
 }
+
+# Rolling prediction function (INNERMOST LOOP: over time k within the test split)
+#
+# For each row k in split_df:
+#   - Compute the global index of the target observation in df_all
+#   - Set origin = target - h  (leakage-safe)
+#   - Fit AR(p) on df_all[1:origin] (expanding window)
+#   - Forecast h steps ahead and take the h-th step as y_hat for the target date
+roll_preds_arp_split <- function(df_all, split_df, split_start_idx, h, p) {
+  purrr::map_dfr(seq_len(nrow(split_df)), function(k) {
+    # Map split-local row k -> global row index of the target in df_all
+    target_global_idx <- split_start_idx + (k - 1)
+
+    # Leakage-safe origin: only allow training data up through (target - h)
+    origin_global_idx <- target_global_idx - h
+
+    # Expanding window training slice (from start of df_all through the origin)
+    train_sub <- df_all[1:origin_global_idx, ]
+
+    # Convert slice to monthly ts, fit AR(p), then forecast h steps ahead
+    ts_sub <- make_ts_from_slice(train_sub)
+    fit    <- fit_arp(ts_sub, p = p)
+    fc     <- forecast::forecast(fit, h = h)
+
+    # Use the h-step forecast and align it to the target observation
+    y_hat <- as.numeric(fc$mean[h])
+
+    tibble(
+      date  = split_df$date[k],
+      y     = split_df$y[k],
+      y_hat = y_hat,
+      resid = split_df$y[k] - y_hat
+    )
+  })
+}
