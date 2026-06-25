@@ -40,3 +40,9 @@ log_sentiment_series <- sentiment_series %>%
 # Log transform the volatility series (monthly mean VIX)
 log_mean_volatility_series <- mean_volatility_series %>%
   mutate(log_value_mnvol = log(mean_value))
+
+# Join and compute transformed ratio
+log_diagnostic_ratio_series <- log_sentiment_series %>%
+  inner_join(log_mean_volatility_series, by = "date") %>%
+  select(-value, -mean_value) %>%
+  mutate(log_ratio_raw = (log_value_sen - log_value_mnvol))
