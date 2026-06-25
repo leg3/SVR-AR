@@ -46,3 +46,26 @@ log_diagnostic_ratio_series <- log_sentiment_series %>%
   inner_join(log_mean_volatility_series, by = "date") %>%
   select(-value, -mean_value) %>%
   mutate(log_ratio_raw = (log_value_sen - log_value_mnvol))
+
+# Time-ordered partitions (monthly obs)
+n_test <- 84   # ~7 years
+
+# Create modeling dataframe (monthly, ordered, no missing y)
+df_all <- log_diagnostic_ratio_series %>%
+  select(date, y = log_ratio_raw) %>%
+  arrange(date) %>%
+  filter(!is.na(y))
+
+# Total number of observations
+n <- nrow(df_all)
+
+# Sanity check: need enough observations to have train + test
+stopifnot(n_test < n)
+
+# Define start index of the test block in df_all
+# This is a "global" index relative to df_all.
+i_test_start <- n - n_test + 1
+
+# Subset df_all into training and test sets
+train_df <- df_all[1:(i_test_start - 1), ]
+test_df  <- df_all[i_test_start:n, ]
